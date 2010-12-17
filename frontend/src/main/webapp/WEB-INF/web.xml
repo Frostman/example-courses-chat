@@ -5,10 +5,24 @@
 
     <description>Chat Room</description>
     <display-name>Chat Room</display-name>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/spring/app-config.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+    </listener>
+
     <servlet>
 
         <servlet-name>ChatServlet</servlet-name>
         <servlet-class>org.atmosphere.cpr.AtmosphereServlet</servlet-class>
+        <!--<servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet</servlet-class>-->
 
         <init-param>
             <param-name>com.sun.jersey.config.property.packages</param-name>
@@ -30,7 +44,7 @@
             <param-value>org.atmosphere.client.FormParamFilter,org.atmosphere.client.JavascriptClientFilter</param-value>
         </init-param>
 
-        <load-on-startup>0</load-on-startup>
+        <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet-mapping>

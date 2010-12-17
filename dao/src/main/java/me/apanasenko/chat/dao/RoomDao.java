@@ -7,4 +7,5 @@ import me.apanasenko.chat.model.RoomEntity;
  * Date: 17.12.10
  */
 public interface RoomDao extends BasicDao<RoomEntity> {
+    RoomEntity findByName(String name);
 }

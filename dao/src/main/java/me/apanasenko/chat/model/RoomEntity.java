@@ -6,6 +6,14 @@ import javax.persistence.*;
  * @author Anton Panasenko
  * Date: 17.12.10
  */
+
+@NamedQueries(
+        @NamedQuery(
+                name = "room.findByName",
+                query = "SELECT entity FROM RoomEntity entity WHERE entity.roomName = ?"
+        )
+)
+
 @Entity
 @Table(name = "room_table")
 public class RoomEntity extends BasicEntity {

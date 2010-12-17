@@ -6,6 +6,13 @@ import javax.persistence.*;
  * @author Anton Panasenko
  * Date: 17.12.10
  */
+@NamedQueries(
+        @NamedQuery(
+                name = "user.findByUserName",
+                query = "SELECT entity FROM UserEntity entity WHERE entity.userName = ?"
+        )
+)
+
 @Entity
 @Table(name = "user_table")
 public class UserEntity extends BasicEntity {

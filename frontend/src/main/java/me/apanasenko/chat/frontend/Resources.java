@@ -1,6 +1,7 @@
 package me.apanasenko.chat.frontend;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -33,5 +34,11 @@ public class Resources {
     @Produces("text/html")
     public @GET InputStream getIndex() {
         return servletController.getResourceAsStream("/index.html");
+    }
+
+    @Path("/logout")
+    public @GET String logout(@Context HttpServletRequest req) {
+        req.getSession().invalidate();
+        return "ok";
     }
 }

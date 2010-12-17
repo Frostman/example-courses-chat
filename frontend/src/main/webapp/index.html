@@ -89,9 +89,9 @@
                     }
                 }
 
-                var location = document.location.toString() + 'pubsub/' + getElementByIdValue('topic');
+                var location = document.location.toString() + 'pubsub/' + getElementByIdValue('topic') + "/" + getElementByIdValue('name');
                 $.atmosphere.subscribe(location, !callbackAdded ? callback : null,
-                        $.atmosphere.request = { transport: getElementByIdValue('transport') });
+                        $.atmosphere.request = { transport: getElementByIdValue('transport')});
                 setCookie('room', getElementByIdValue('topic'), 10);
                 connectedEndpoint = $.atmosphere.response;
                 callbackAdded = true;
@@ -135,7 +135,7 @@
                         transport = "sent trying to use " + detectedTransport;
                     }
 
-                    connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementByIdValue('topic'),
+                    connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementById('topic').value + "/" + getElementByIdValue('name'),
                             null,
                             $.atmosphere.request = {data: 'name=' + getElementByIdValue('name') + '&message=' + getElementByIdValue('phrase') + '&transport=' + transport,
                                 contentType: "text/html;charset=utf-8"});
@@ -149,6 +149,7 @@
             getElementById('quit').onclick = function(event) {
                 setCookie('name', '', 1);
                 setCookie('room', '', 1);
+                $.getJSON(document.location.toString() + "logout", null, null);
                 document.location.reload();
             };
 
@@ -164,7 +165,7 @@
                     transport = "sent trying to use " + detectedTransport;
                 }
 
-                connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementById('topic').value,
+                connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementById('topic').value + "/" + getElementByIdValue('name'),
                         null,
                         $.atmosphere.request = {data: 'name=' + getElementByIdValue('name') + '&message=' + getElementByIdValue('phrase') + '&transport=' + transport,
                             contentType: "text/html;charset=utf-8"});
