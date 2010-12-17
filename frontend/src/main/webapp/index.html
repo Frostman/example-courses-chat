@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en-us" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Sign in with Login/Password</title>
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <script type="text/javascript" src="jquery/jquery-1.4.2.js"></script>
+    <script type="text/javascript" src="jquery/jquery.form.js"></script>
+    <script type="text/javascript" src="jquery/jquery.atmosphere.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var connectedEndpoint;
+            var callbackAdded = false;
+            var detectedTransport = null;
+
+            function setCookie(c_name, value, expiredays) {
+                var exdate=new Date();
+                exdate.setDate(exdate.getDate()+expiredays);
+                document.cookie=c_name+ "=" + escape(value)+
+                        ((expiredays==null) ? "" : ";expires="+exdate.toUTCString());
+            }
+
+            function getCookie(c_name) {
+                if (document.cookie.length>0) {
+                    c_start=document.cookie.indexOf(c_name + "=");
+                    if (c_start!=-1) {
+                        c_start=c_start + c_name.length+1;
+                        c_end=document.cookie.indexOf(";",c_start);
+                        if (c_end==-1) c_end=document.cookie.length;
+                        return unescape(document.cookie.substring(c_start,c_end));
+                    }
+                }
+                return "";
+            }
+
+            function check() {
+                var name = getCookie('name');
+                var room = getCookie('room');
+                if (name != '' && room != '') {
+                    getElementById('topic').value = room;
+                    getElementById('name').value = name;
+                    connect()
+                }
+            }
+
+            check();
+
+            function getKeyCode(ev) {
+                if (window.event) return window.event.keyCode;
+                return ev.keyCode;
+            }
+
+            function getElementById() {
+                return document.getElementById(arguments[0]);
+            }
+
+            function getTransport(t) {
+                transport = t.options[t.selectedIndex].value;
+                if (transport == 'autodetect') {
+                    transport = 'websocket';
+                }
+
+                return false;
+            }
+
+            function getElementByIdValue() {
+                detectedTransport == null;
+                return document.getElementById(arguments[0]).value;
+            }
+
+            function subscribe(topic) {
+
+                // jquery.atmosphere.response
+                function callback(response) {
+                    // Websocket events.
+                    $.atmosphere.log('info', ["response.state: " + response.state]);
+                    $.atmosphere.log('info', ["response.transport: " + response.transport]);
+
+                    detectedTransport = response.transport;
+                    if (response.transport != 'polling' && response.state != 'connected' && response.state != 'closed') {
+                        $.atmosphere.log('info', ["response.responseBody: " + response.responseBody]);
+                        if (response.status == 200) {
+                            var data = response.responseBody;
+                            if (data.length > 0) {
+                                $('ul').prepend($('<li></li>').text(data));
+                            }
+                        }
+                    }
+                }
+
+                var location = document.location.toString() + 'pubsub/' + getElementByIdValue('topic');
+                $.atmosphere.subscribe(location, !callbackAdded ? callback : null,
+                        $.atmosphere.request = { transport: getElementByIdValue('transport') });
+                setCookie('room', getElementByIdValue('topic'), 10);
+                connectedEndpoint = $.atmosphere.response;
+                callbackAdded = true;
+            }
+
+            function connect() {
+                getElementById('phrase').value = '';
+                getElementById('sendMessage').className = '';
+                getElementById('phrase').focus();
+                subscribe();
+                $('#singIn').hide(10);
+                $('#input').show(10);
+                //                getElementById('connect').value = "Switch transport";
+            }
+
+            getElementById('connect').onclick = function(event) {
+                if (getElementById('topic').value == '' || getElementByIdValue('name') == '') {
+                    alert("Please enter a PubSub topic to subscribe");
+                    return;
+                }
+                connect();
+            };
+
+            getElementById('topic').onkeyup = function(event) {
+                getElementById('sendMessage').className = 'hidden';
+                var keyc = getKeyCode(event);
+                if (keyc == 13 || keyc == 10) {
+                    connect();
+                    return false;
+                }
+            };
+
+            getElementById('phrase').setAttribute('autocomplete', 'OFF');
+            getElementById('phrase').onkeyup = function(event) {
+                var keyc = getKeyCode(event);
+                if (keyc == 13 || keyc == 10) {
+
+                    var transport = "sent using " + detectedTransport;
+                    if (detectedTransport == null) {
+                        detectedTransport = getElementByIdValue('transport');
+                        transport = "sent trying to use " + detectedTransport;
+                    }
+
+                    connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementByIdValue('topic'),
+                            null,
+                            $.atmosphere.request = {data: 'name=' + getElementByIdValue('name') + '&message=' + getElementByIdValue('phrase') + '&transport=' + transport,
+                                contentType: "text/html;charset=utf-8"});
+
+                    getElementById('phrase').value = '';
+                    return false;
+                }
+                return true;
+            };
+
+            getElementById('quit').onclick = function(event) {
+                setCookie('name', '', 1);
+                setCookie('room', '', 1);
+                document.location.reload();
+            };
+
+            getElementById('send_message').onclick = function(event) {
+                if (getElementById('topic').value == '') {
+                    alert("Please enter a message to publish");
+                    return;
+                }
+
+                var transport = "sent using " + detectedTransport;
+                if (detectedTransport == null) {
+                    detectedTransport = getElementByIdValue('transport');
+                    transport = "sent trying to use " + detectedTransport;
+                }
+
+                connectedEndpoint.push(document.location.toString() + 'pubsub/' + getElementById('topic').value,
+                        null,
+                        $.atmosphere.request = {data: 'name=' + getElementByIdValue('name') + '&message=' + getElementByIdValue('phrase') + '&transport=' + transport,
+                            contentType: "text/html;charset=utf-8"});
+
+                getElementById('phrase').value = '';
+                setCookie('name', getElementByIdValue('name'), 10);
+                return false;
+            };
+
+            getElementById('topic').focus();
+        });
+    </script>
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <ul></ul>
+    </div>
+    <div id="footer">
+        <div id="singIn">
+            <div id='pubsub'>
+                <label for="topic">Room:</label>
+                <input id='topic' type='text'/>
+                <label for="name">User name:</label>
+                <input id='name' type="text"/>
+            </div>
+
+            <div id='select_transport'>
+                <input id='connect' class='button' type='submit' name='connect' value='Join'/>
+                <select id="transport" style="visibility:hidden;">
+                    <option id="autodetect" value="websocket">autodetect</option>
+                    <option id="long-polling" value="long-polling">long-polling</option>
+                    <option id="streaming" value="streaming">http streaming</option>
+                    <option id="websocket" value="websocket">websocket</option>
+                </select>
+            </div>
+        </div>
+        <div id="input" style="display: none; ">
+            <div id='sendMessage'>
+                <textarea id="phrase" cols="40" rows="5">Enter your text here...</textarea>
+                <input id='send_message' class='button' type='submit' name='Publish' value='Publish Message'/>
+                <input id="quit" type="submit" value="Quit"/>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
