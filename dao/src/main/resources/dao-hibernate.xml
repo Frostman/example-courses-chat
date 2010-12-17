@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:db.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="abstractDao" abstract="true"
+          class="org.springframework.aop.framework.ProxyFactoryBean">
+    </bean>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${database.driver-class-name}"/>
+        <property name="url" value="${database.url}"/>
+        <property name="username" value="${database.username}"/>
+        <property name="password" value="${database.password}"/>
+        <property name="initialSize" value="1"/>
+        <property name="maxActive" value="3"/>
+    </bean>
+
+    <bean id="hibernateProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="properties">
+            <props>
+                <prop key="hibernate.dialect">${database.hibernate.dialect}</prop>
+                <!--                <prop key="hibernate.show_sql">false</prop>
+              <prop key="hibernate.bytecode.use_reflection_optimizer">true</prop>
+              <prop key="hibernate.jdbc.use_streams_for_binary">true</prop> -->
+                <!--<prop key="hibernate.hbm2ddl.auto">update</prop>-->
+                <prop key="hibernate.hbm2ddl.auto">create</prop>
+                <!--<prop key="hibernate.hbm2ddl.auto">drop</prop>-->
+            </props>
+        </property>
+    </bean>
+
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <ref local="hibernateProperties"/>
+        </property>
+        <property name="annotatedClasses">
+            <list>
+                <value>me.apanasenko.chat.model.UserEntity</value>
+                <value>me.apanasenko.chat.model.RoomEntity</value>
+                <value>me.apanasenko.chat.model.MessageEntity</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+        <property name="sessionFactory" ref="sessionFactory"/>
+        <property name="cacheQueries" value="true"/>
+    </bean>
+
+    <bean id="abstractDaoTarget" abstract="true"
+          class="me.apanasenko.chat.dao.impl.BasicDaoImpl">
+        <property name="hibernateTemplate" ref="hibernateTemplate"/>
+    </bean>
+
+    <bean id="userDao" class="me.apanasenko.chat.dao.impl.UserDaoImpl">
+        <constructor-arg value="me.apanasenko.chat.model.UserEntity"/>
+        <property name="hibernateTemplate" ref="hibernateTemplate"/>
+    </bean>
+
+    <bean id="roomDao" class="me.apanasenko.chat.dao.impl.RoomDaoImpl">
+        <constructor-arg value="me.apanasenko.chat.model.RoomEntity"/>
+        <property name="hibernateTemplate" ref="hibernateTemplate"/>
+    </bean>
+
+    <bean id="messageDao" class="me.apanasenko.chat.dao.impl.MessageDaoImpl">
+        <constructor-arg value="me.apanasenko.chat.model.MessageEntity"/>
+        <property name="hibernateTemplate" ref="hibernateTemplate"/>
+    </bean>
+</beans>
